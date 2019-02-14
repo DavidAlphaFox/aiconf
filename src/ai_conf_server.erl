@@ -34,7 +34,7 @@ sections(ConfName) ->
     Matches = ets:match(?TAB, {{ConfName, '$1', '_'}, '_'}),
     lists:umerge(Matches).
 section(ConfName,SectionKey) ->
-    SectionKey0 = ai_stirng:to_string(SectionKey),
+    SectionKey0 = ai_string:to_string(SectionKey),
     Matches = ets:match(?TAB, {{ConfName, SectionKey0, '$1'}, '$2'}),
     [{Key, Value} || [Key, Value] <- Matches].
 value(ConfName, SectionKey, Key, Default) ->
@@ -77,7 +77,7 @@ init([]) ->
     load_conf(),
     {ok, #state{}}.
 
-%%--------------------------------------------------------------------
+%%----------------------------------------------------1----------------
 %% @private
 %% @doc
 %% Handling call messages
