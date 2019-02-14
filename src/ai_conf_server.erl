@@ -34,10 +34,13 @@ sections(ConfName) ->
     Matches = ets:match(?TAB, {{ConfName, '$1', '_'}, '_'}),
     lists:umerge(Matches).
 section(ConfName,SectionKey) ->
-    Matches = ets:match(?TAB, {{ConfName, SectionKey, '$1'}, '$2'}),
+    SectionKey0 = ai_stirng:to_string(SectionKey),
+    Matches = ets:match(?TAB, {{ConfName, SectionKey0, '$1'}, '$2'}),
     [{Key, Value} || [Key, Value] <- Matches].
 value(ConfName, SectionKey, Key, Default) ->
-    case ets:lookup(?TAB, {ConfName, SectionKey, Key}) of
+    SectionKey0 = ai_string:to_string(SectionKey),
+    Key0 = ai_string:to_string(Key),
+    case ets:lookup(?TAB, {ConfName, SectionKey0, Key0}) of
         [] -> Default;
         [{_, Match}] -> Match
     end.
