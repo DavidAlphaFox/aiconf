@@ -17,6 +17,9 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3, format_status/2]).
 
+-export([load_conf/2,sections/1,section/2,value/4]).
+
+
 -define(SERVER, ?MODULE).
 -define(TAB,ai_conf_table).
 -record(state, {}).
@@ -24,7 +27,20 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+load_conf(ConfName,Files) ->
+    gen_server:call(?MODULE, {load_conf,{ConfName,Files}}, infinity).
 
+sections(ConfName) ->
+    Matches = ets:match(?TAB, {{ConfName, '$1', '_'}, '_'}),
+    lists:umerge(Matches).
+section(ConfName,SectionKey) ->
+    Matches = ets:match(?TAB, {{ConfName, SectionKey, '$1'}, '$2'}),
+    [{Key, Value} || [Key, Value] <- Matches].
+value(ConfName, SectionKey, Key, Default) ->
+    case ets:lookup(?TAB, {ConfName, SectionKey, Key}) of
+        [] -> Default;
+        [{_, Match}] -> Match
+    end.
 %%--------------------------------------------------------------------
 %% @doc
 %% Starts the server
@@ -73,6 +89,9 @@ init([]) ->
                          {noreply, NewState :: term(), hibernate} |
                          {stop, Reason :: term(), Reply :: term(), NewState :: term()} |
                          {stop, Reason :: term(), NewState :: term()}.
+handle_call({load_conf,Msg},_From,State)->
+		Reply = load_conf([Msg]),
+    {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

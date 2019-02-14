@@ -1,0 +1,10 @@
+{
+	"db":	{
+			"name":	"pg_test",
+			"host":	"localhost",
+			"port":	5432
+	},
+	"server":	{
+		"port":	 8080
+	}
+}
