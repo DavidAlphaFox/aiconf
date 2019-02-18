@@ -17,7 +17,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3, format_status/2]).
 
--export([load_conf/2,sections/1,section/2,value/4]).
+-export([load_conf/2,sections/1,section/3,value/4]).
 
 
 -define(SERVER, ?MODULE).
@@ -33,10 +33,14 @@ load_conf(ConfName,Files) ->
 sections(ConfName) ->
     Matches = ets:match(?TAB, {{ConfName, '$1', '_'}, '_'}),
     lists:umerge(Matches).
-section(ConfName,SectionKey) ->
+
+section(ConfName,SectionKey,Default) ->
     SectionKey0 = ai_string:to_string(SectionKey),
     Matches = ets:match(?TAB, {{ConfName, SectionKey0, '$1'}, '$2'}),
-    [{Key, Value} || [Key, Value] <- Matches].
+    case Matches of 
+        [] -> Default;
+        _-> [{Key, Value} || [Key, Value] <- Matches]
+    end.
 value(ConfName, SectionKey, Key, Default) ->
     SectionKey0 = ai_string:to_string(SectionKey),
     Key0 = ai_string:to_string(Key),

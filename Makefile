@@ -1,6 +1,6 @@
 PROJECT = aiconf
 PROJECT_DESCRIPTION = conf tool for production from ailink.io
-PROJECT_VERSION = 0.1.0
+PROJECT_VERSION = 0.1.1
 
 ERLC_OPTS = -Werror +debug_info +warn_export_vars +warn_shadow_vars +warn_obsolete_guard
 DEPS = jsx ailib
