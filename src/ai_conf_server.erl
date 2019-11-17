@@ -21,7 +21,7 @@
 
 
 -define(SERVER, ?MODULE).
--define(TAB,ai_conf_table).
+-define(TAB,ai_conf).
 -record(state, {}).
 
 %%%===================================================================
