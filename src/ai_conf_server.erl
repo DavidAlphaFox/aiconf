@@ -205,7 +205,7 @@ parse(ConfName, ConfFile)->
                 Msg = list_to_binary(io_lib:format(Fmt, [ConfFile])),
                 throw({startup_error, Msg})
         end,
-    Decoded = jsx:decode(Json),
+    Decoded = jiffy:decode(Json),
     lists:foldl(fun({SectionKey,SectionData},Acc)->
                        lists:foldl(fun({Key,Value},Acc1)-> 
                                            [{{ConfName,SectionKey,Key},Value}|Acc1]
