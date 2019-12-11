@@ -183,9 +183,9 @@ init_ets() ->
         _ -> true
     end.
 load_conf()->
-    case application:get_env(econfig, app_conf) of
+    case application:get_env(aiconf, conf) of
         undefined -> ok;
-        {ok, {Confs}} -> load_conf(Confs)
+        {ok, Confs} -> load_conf(Confs)
     end.
 load_conf([])-> ok;
 load_conf([{ConfName, ConfFiles} | Rest])->
@@ -205,9 +205,10 @@ parse(ConfName, ConfFile)->
                 Msg = list_to_binary(io_lib:format(Fmt, [ConfFile])),
                 throw({startup_error, Msg})
         end,
-    Decoded = jiffy:decode(Json),
-    lists:foldl(fun({SectionKey,SectionData},Acc)->
-                       lists:foldl(fun({Key,Value},Acc1)-> 
-                                           [{{ConfName,SectionKey,Key},Value}|Acc1]
-                                   end,Acc,SectionData)
+    { Decoded } = jiffy:decode(Json),
+    lists:foldl(fun({SectionKey,{SectionData}},Acc) ->
+                   lists:foldl(fun({Key,Value},Acc1)->
+                                       [{{ConfName,SectionKey,Key},Value}|Acc1]
+                               end,Acc,SectionData)
+                        
                end,[],Decoded).
