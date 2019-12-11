@@ -185,7 +185,7 @@ init_ets() ->
 load_conf()->
     case application:get_env(econfig, app_conf) of
         undefined -> ok;
-        {ok, Confs} -> load_conf(Confs)
+        {ok, {Confs}} -> load_conf(Confs)
     end.
 load_conf([])-> ok;
 load_conf([{ConfName, ConfFiles} | Rest])->
