@@ -31,23 +31,38 @@ load_conf(ConfName,Files) ->
     gen_server:call(?MODULE, {load_conf,{ConfName,Files}}, infinity).
 
 sections(ConfName) ->
-    Matches = ets:match(?TAB, {{ConfName, '$1', '_'}, '_'}),
-    lists:umerge(Matches).
+  CacheKey = {ai_conf,ConfName},
+  Fun =
+    fun() ->
+      Matches = ets:match(?TAB, {{ConfName, '$1', '_'}, '_'}),
+      lists:umerge(Matches)
+    end,
+  ai_process:get(CacheKey,Fun).
 
 section(ConfName,SectionKey,Default) ->
-    SectionKey0 = ai_string:to_string(SectionKey),
-    Matches = ets:match(?TAB, {{ConfName, SectionKey0, '$1'}, '$2'}),
-    case Matches of 
-        [] -> Default;
-        _-> [{Key, Value} || [Key, Value] <- Matches]
-    end.
+  SectionKey0 = ai_string:to_string(SectionKey),
+  CacheKey = {ai_conf,{ConfName,SectionKey0}},
+  Fun = 
+    fun() ->  
+        Matches = ets:match(?TAB, {{ConfName, SectionKey0, '$1'}, '$2'}),
+          case Matches of
+            [] -> Default;
+            _-> [{Key, Value} || [Key, Value] <- Matches]
+          end
+    end,
+  ai_process:get(CacheKey,Fun).
 value(ConfName, SectionKey, Key, Default) ->
-    SectionKey0 = ai_string:to_string(SectionKey),
-    Key0 = ai_string:to_string(Key),
-    case ets:lookup(?TAB, {ConfName, SectionKey0, Key0}) of
-        [] -> Default;
-        [{_, Match}] -> Match
-    end.
+  SectionKey0 = ai_string:to_string(SectionKey),
+  Key0 = ai_string:to_string(Key),
+  CacheKey = {ai_conf,{ConfName,SectionKey0,Key0}},
+  Fun = 
+    fun() ->
+        case ets:lookup(?TAB, {ConfName, SectionKey0, Key0}) of
+          [] -> Default;
+          [{_, Match}] -> Match
+        end
+    end,
+  ai_process:get(CacheKey,Fun).
 %%--------------------------------------------------------------------
 %% @doc
 %% Starts the server
