@@ -18,7 +18,7 @@
          terminate/2, code_change/3, format_status/2]).
 
 -export([load_conf/2,sections/1,section/3,value/4]).
-
+-export([add/3,add/4]).
 
 -define(SERVER, ?MODULE).
 -define(TAB,ai_conf).
@@ -63,6 +63,11 @@ value(ConfName, SectionKey, Key, Default) ->
         end
     end,
   ai_process:get(CacheKey,Fun).
+
+add(ConfName,SectionKey,Key,Value)->
+  gen_server:call(?SERVER,{add,ConfName,SectionKey,Key,Value}).
+add(ConfName,SectionKey,KeyValues)->
+  gen_server:call(?SERVER,{add,ConfName,SectionKey,KeyValues}).
 %%--------------------------------------------------------------------
 %% @doc
 %% Starts the server
@@ -112,11 +117,22 @@ init([]) ->
                          {stop, Reason :: term(), Reply :: term(), NewState :: term()} |
                          {stop, Reason :: term(), NewState :: term()}.
 handle_call({load_conf,Msg},_From,State)->
-		Reply = load_conf([Msg]),
-    {reply, Reply, State};
+  Reply = load_conf([Msg]),
+  {reply, Reply, State};
+handle_call({add,ConfName,SectionKey,Key,Value},_From,State)->
+  Reply = add_values(ConfName,SectionKey,[{Key,Value}]),
+  {reply,Reply,State};
+handle_call({add,ConfName,SectionKey,KeyValues},_From,State)
+  when erlang:is_map(KeyValues) ->
+  Reply = add_values(ConfName,SectionKey,maps:to_list(KeyValues)),
+  {reply,Reply,State};
+handle_call({add,ConfName,SectionKey,KeyValues},_From,State)
+  when erlang:is_list(KeyValues)->
+  Reply = add_values(ConfName,SectionKey,maps:to_list(KeyValues)),
+  {reply,Reply,State};
 handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+  Reply = fail,
+  {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -191,11 +207,11 @@ format_status(_Opt, Status) ->
 %%%===================================================================
 init_ets() ->
     case ets:info(?TAB, name) of 
-        undefined ->
-            ets:new(?TAB, [ordered_set, public, named_table,
-                           {read_concurrency, true},
-                           {write_concurrency, true}]);
-        _ -> true
+      undefined ->
+        ets:new(?TAB, [ordered_set, public, named_table,
+                       {read_concurrency, true},
+                       {write_concurrency, true}]);
+      _ -> true
     end.
 load_conf()->
     case application:get_env(aiconf, conf) of
@@ -211,19 +227,32 @@ load_conf([{ConfName, ConfFiles} | Rest])->
     load_conf(Rest).
 
 parse(ConfName, ConfFile)->
-    Json = 
-        case file:read_file(ConfFile) of
-            {ok,Bin} -> Bin;
-            {error, eacces} ->throw({file_permission_error,ConfFile});
-            {error, enoent} ->
-                Fmt = "Couldn't find  configuration file ~s.",
-                Msg = list_to_binary(io_lib:format(Fmt, [ConfFile])),
-                throw({startup_error, Msg})
-        end,
-    { Decoded } = jiffy:decode(Json),
-    lists:foldl(fun({SectionKey,{SectionData}},Acc) ->
-                   lists:foldl(fun({Key,Value},Acc1)->
-                                       [{{ConfName,SectionKey,Key},Value}|Acc1]
-                               end,Acc,SectionData)
-                        
-               end,[],Decoded).
+  Json =
+    case file:read_file(ConfFile) of
+      {ok,Bin} -> Bin;
+      {error, eacces} ->throw({file_permission_error,ConfFile});
+      {error, enoent} ->
+        Fmt = "Couldn't find  configuration file ~s.",
+        Msg = list_to_binary(io_lib:format(Fmt, [ConfFile])),
+        throw({startup_error, Msg})
+    end,
+  { Decoded } = jiffy:decode(Json),
+  lists:foldl(
+    fun({SectionKey,{SectionData}},Acc) ->
+        lists:foldl(
+          fun({Key,Value},Acc1)-> [{{ConfName,SectionKey,Key},Value}|Acc1] end,
+          Acc,SectionData)
+    end,[],Decoded).
+add_values(ConfName,SectionKey,KeyValues)->
+  ConfName0 = ai_string:to_string(ConfName),
+  SectionKey0 = ai_string:to_string(SectionKey),
+  try
+    Items = lists:map(
+              fun({Key,Value})->
+                  Key0 = ai_string:to_string(Key),
+                  {{ConfName0,SectionKey0,Key0},Value}
+              end,KeyValues),
+    ets:insert(?TAB,Items)
+  catch
+    _:_ -> fail
+  end.

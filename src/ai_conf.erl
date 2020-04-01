@@ -1,6 +1,7 @@
 -module(ai_conf).
 -export([load_conf/2]).
 -export([sections/1,section/2,section/3,value/3,value/4]).
+-export([add/3,add/4]).
 load_conf(ConfName,Files)->
   ai_conf_server:load_conf(ConfName,Files).
 sections(ConfName)->
@@ -13,5 +14,7 @@ value(ConfName,SectionKey,Key)->
   ai_conf_server:value(ConfName,SectionKey,Key,undefined).
 value(ConfName,SectionKey,Key,Default)->
   ai_conf_server:value(ConfName,SectionKey,Key,Default).
-
-   
+add(ConfName,SectionKey,Key,Value)->
+  ai_conf_server:add(ConfName,SectionKey,Key,Value).
+add(ConfName,SectionKey,KeyValues)->
+  ai_conf_server:add(ConfName,SectionKey,KeyValues).
