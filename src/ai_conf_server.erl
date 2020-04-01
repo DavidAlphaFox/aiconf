@@ -128,7 +128,7 @@ handle_call({add,ConfName,SectionKey,KeyValues},_From,State)
   {reply,Reply,State};
 handle_call({add,ConfName,SectionKey,KeyValues},_From,State)
   when erlang:is_list(KeyValues)->
-  Reply = add_values(ConfName,SectionKey,maps:to_list(KeyValues)),
+  Reply = add_values(ConfName,SectionKey,KeyValues),
   {reply,Reply,State};
 handle_call(_Request, _From, State) ->
   Reply = fail,
