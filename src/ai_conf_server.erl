@@ -244,13 +244,12 @@ parse(ConfName, ConfFile)->
           Acc,SectionData)
     end,[],Decoded).
 add_values(ConfName,SectionKey,KeyValues)->
-  ConfName0 = ai_string:to_string(ConfName),
   SectionKey0 = ai_string:to_string(SectionKey),
   try
     Items = lists:map(
               fun({Key,Value})->
                   Key0 = ai_string:to_string(Key),
-                  {{ConfName0,SectionKey0,Key0},Value}
+                  {{ConfName,SectionKey0,Key0},Value}
               end,KeyValues),
     ets:insert(?TAB,Items)
   catch
